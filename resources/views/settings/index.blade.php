@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Pengaturan')
 @section('page-title','Pengaturan Sistem')
 @section('breadcrumb') <span class="mx-1">/</span> Pengaturan @endsection
@@ -7,7 +7,7 @@
 <div class="max-w-3xl space-y-6">
 
 {{-- System Settings --}}
-<form method="POST" action="{{ route('settings.update') }}" class="space-y-5">
+<form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-5">
     @csrf @method('PATCH')
 
     <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">
@@ -78,7 +78,7 @@
         <h3 class="font-semibold text-slate-800">Informasi Kost</h3>
         <p class="text-xs text-slate-400 mt-0.5">Data kost yang ditampilkan di seluruh aplikasi</p>
     </div>
-    <a href="{{ route('kost.index') }}"
+    <a href="{{ route('admin.kost.index') }}"
        class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>

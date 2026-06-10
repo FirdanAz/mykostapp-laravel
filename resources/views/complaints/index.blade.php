@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Keluhan')
 @section('page-title','Manajemen Keluhan')
 @section('breadcrumb') <span class="mx-1">/</span> Keluhan @endsection
@@ -8,7 +8,7 @@
 
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <p class="text-sm text-slate-500">Total <span class="font-semibold text-slate-700">{{ $complaints->total() }}</span> keluhan</p>
-    <a href="{{ route('complaints.create') }}"
+    <a href="{{ route('admin.complaints.create') }}"
        class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
         Catat Keluhan
@@ -42,7 +42,7 @@
         </select>
         <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-xl hover:bg-slate-700">Filter</button>
         @if(request()->hasAny(['search','status','priority','category']))
-        <a href="{{ route('complaints.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
+        <a href="{{ route('admin.complaints.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
         @endif
     </form>
 </div>
@@ -86,7 +86,7 @@
                     @if($complaint->handler)
                     <span class="text-xs text-slate-400">Ditangani: {{ $complaint->handler->name }}</span>
                     @endif
-                    <a href="{{ route('complaints.show', $complaint) }}" class="ml-auto text-sm font-medium text-blue-600 hover:text-blue-700">
+                    <a href="{{ route('admin.complaints.show', $complaint) }}" class="ml-auto text-sm font-medium text-blue-600 hover:text-blue-700">
                         Lihat Detail →
                     </a>
                 </div>

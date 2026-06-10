@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Tagihan')
 @section('page-title','Manajemen Tagihan')
 @section('breadcrumb') <span class="mx-1">/</span> Tagihan @endsection
@@ -9,7 +9,7 @@
 {{-- Header --}}
 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div class="flex gap-3">
-        <a href="{{ route('invoices.create') }}"
+        <a href="{{ route('admin.invoices.create') }}"
            class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-blue-600/20">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
             Buat Tagihan
@@ -78,7 +78,7 @@
         </select>
         <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-xl hover:bg-slate-700">Filter</button>
         @if(request()->hasAny(['search','status','month','year']))
-        <a href="{{ route('invoices.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
+        <a href="{{ route('admin.invoices.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
         @endif
     </form>
 </div>
@@ -150,14 +150,14 @@
                     </td>
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-1.5 justify-end">
-                            <a href="{{ route('invoices.show', $invoice) }}"
+                            <a href="{{ route('admin.invoices.show', $invoice) }}"
                                class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Detail">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                 </svg>
                             </a>
                             @if(in_array($invoice->status, ['unpaid','overdue','rejected']))
-                            <a href="{{ route('payments.upload', $invoice) }}"
+                            <a href="{{ route('admin.payments.upload', $invoice) }}"
                                class="p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Upload Bukti">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -165,7 +165,7 @@
                             </a>
                             @endif
                             @if($invoice->status !== 'paid')
-                            <form method="POST" action="{{ route('invoices.destroy', $invoice) }}" onsubmit="return confirm('Hapus invoice ini?')">
+                            <form method="POST" action="{{ route('admin.invoices.destroy', $invoice) }}" onsubmit="return confirm('Hapus invoice ini?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -197,7 +197,7 @@
             </button>
         </div>
         <p class="text-sm text-slate-500 mb-5">Buat tagihan otomatis untuk semua penghuni aktif sesuai bulan dan tahun yang dipilih.</p>
-        <form method="POST" action="{{ route('invoices.generate-bulk') }}" class="space-y-4">
+        <form method="POST" action="{{ route('admin.invoices.generate-bulk') }}" class="space-y-4">
             @csrf
             <div class="grid grid-cols-2 gap-4">
                 <div>

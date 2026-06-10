@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title',$complaint->title)
 @section('page-title','Detail Keluhan')
-@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('complaints.index') }}" class="hover:text-slate-600">Keluhan</a> <span class="mx-1">/</span> Detail @endsection
+@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('admin.complaints.index') }}" class="hover:text-slate-600">Keluhan</a> <span class="mx-1">/</span> Detail @endsection
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -79,7 +79,7 @@
             {{-- Reply Form --}}
             @if(!in_array($complaint->status, ['resolved','rejected']))
             <div class="p-5 bg-slate-50 border-t border-slate-100">
-                <form method="POST" action="{{ route('complaints.reply', $complaint) }}" class="flex gap-3">
+                <form method="POST" action="{{ route('admin.complaints.reply', $complaint) }}" class="flex gap-3">
                     @csrf
                     <img src="{{ auth()->user()->avatar_url }}" alt="" class="w-8 h-8 rounded-full object-cover flex-shrink-0 mt-1">
                     <div class="flex-1">
@@ -105,7 +105,7 @@
         @if(!in_array($complaint->status, ['resolved','rejected']))
         <div class="bg-white rounded-2xl border border-slate-200 p-5">
             <h3 class="font-semibold text-slate-800 text-sm mb-4">Update Status</h3>
-            <form method="POST" action="{{ route('complaints.update-status', $complaint) }}" class="space-y-3">
+            <form method="POST" action="{{ route('admin.complaints.update-status', $complaint) }}" class="space-y-3">
                 @csrf @method('PATCH')
                 <select name="status" class="w-full px-4 py-2.5 rounded-xl border border-slate-300 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="new"         {{ $complaint->status=='new'         ? 'selected':'' }}>Baru</option>
@@ -144,7 +144,7 @@
             @endif
         </div>
 
-        <a href="{{ route('tenants.show', $complaint->tenant) }}"
+        <a href="{{ route('admin.tenants.show', $complaint->tenant) }}"
            class="w-full flex items-center gap-3 bg-white border border-slate-200 rounded-2xl p-4 hover:bg-slate-50 transition-colors">
             <img src="{{ $complaint->tenant->photo_url }}" alt="" class="w-10 h-10 rounded-full object-cover">
             <div>

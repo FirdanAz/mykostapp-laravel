@@ -9,11 +9,20 @@ use Illuminate\Support\Collection;
 
 class InvoiceService
 {
-    public function generateMonthly(int $year, int $month): Collection
+    /**
+     * Generate invoice bulanan untuk semua tenant aktif di kos tertentu.
+     * @param int $kostId Kost ID untuk membatasi scope
+     */
+    public function generateMonthly(int $year, int $month, int $kostId): Collection
     {
-        $created  = collect();
-        $dueDays  = (int) \App\Models\Setting::get('invoice_due_days', 10);
-        $tenants  = Tenant::where('status','active')->with('room')->get();
+        $created = collect();
+        $dueDays = (int) \App\Models\Setting::get('invoice_due_days', 10);
+
+        // Hanya ambil tenant dari kos yang ditentukan
+        $tenants = Tenant::where('status', 'active')
+            ->whereHas('room', fn($q) => $q->where('kost_id', $kostId))
+            ->with('room')
+            ->get();
 
         foreach ($tenants as $tenant) {
             $periodStart = Carbon::create($year, $month, 1)->startOfMonth();
@@ -44,8 +53,8 @@ class InvoiceService
 
     public function markOverdue(): int
     {
-        return Invoice::where('status','unpaid')
-            ->where('due_date','<', now()->toDateString())
+        return Invoice::where('status', 'unpaid')
+            ->where('due_date', '<', now()->toDateString())
             ->update(['status' => 'overdue']);
     }
 }

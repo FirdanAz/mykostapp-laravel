@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Data Kost')
 @section('page-title','Data Kost')
 @section('breadcrumb') <span class="mx-1">/</span> Data Kost @endsection
@@ -46,7 +46,7 @@
 @endif
 
 {{-- Edit Form --}}
-<form method="POST" action="{{ route('kost.store') }}" enctype="multipart/form-data" class="space-y-5">
+<form method="POST" action="{{ route('admin.kost.store') }}" enctype="multipart/form-data" class="space-y-5">
     @csrf
 
     <div class="bg-white rounded-2xl border border-slate-200 p-6 space-y-5">

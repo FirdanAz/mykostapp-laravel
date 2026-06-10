@@ -41,53 +41,103 @@
         </div>
         <div>
             <p class="text-white font-bold text-sm leading-none">{{ \App\Models\Setting::get('app_name','MyKostApp') }}</p>
-            <p class="text-slate-400 text-xs mt-0.5">Manajemen Kost</p>
+            <p class="text-slate-400 text-xs mt-0.5">
+                {{ auth()->user()->isAdmin() ? 'Panel Admin' : 'Portal Penyewa' }}
+            </p>
         </div>
     </div>
 
     {{-- Nav --}}
     <nav class="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto scrollbar-none">
 
+        @if(auth()->user()->isAdmin())
+        {{-- ── MENU ADMIN ── --}}
         @php
+        $kost = auth()->user()->kost;
         $navItems = [
-            ['route' => 'dashboard',         'icon' => 'grid',       'label' => 'Dashboard'],
-            ['route' => 'kost.index',         'icon' => 'building',   'label' => 'Data Kost'],
-            ['route' => 'rooms.index',        'icon' => 'door-open',  'label' => 'Kamar'],
-            ['route' => 'tenants.index',      'icon' => 'users',      'label' => 'Penghuni'],
-            ['route' => 'invoices.index',     'icon' => 'receipt',    'label' => 'Tagihan'],
-            ['route' => 'payments.index',     'icon' => 'credit-card','label' => 'Pembayaran'],
-            ['route' => 'complaints.index',   'icon' => 'chat',       'label' => 'Keluhan'],
-            ['route' => 'reports.index',      'icon' => 'chart',      'label' => 'Laporan'],
-            ['route' => 'settings.index',     'icon' => 'cog',        'label' => 'Pengaturan'],
+            ['route' => 'dashboard',              'icon' => 'grid',       'label' => 'Dashboard'],
+            ['route' => 'admin.kost.index',        'icon' => 'building',   'label' => 'Data Kos'],
+            ['route' => 'admin.rooms.index',       'icon' => 'door-open',  'label' => 'Kamar'],
+            ['route' => 'admin.tenants.index',     'icon' => 'users',      'label' => 'Penghuni'],
+            ['route' => 'admin.applications.index', 'icon' => 'folder-open','label' => 'Pengajuan Sewa'],
+            ['route' => 'admin.invoices.index',    'icon' => 'receipt',    'label' => 'Tagihan'],
+            ['route' => 'admin.payments.index',    'icon' => 'credit-card','label' => 'Pembayaran'],
+            ['route' => 'admin.complaints.index',  'icon' => 'chat',       'label' => 'Keluhan'],
+            ['route' => 'admin.reports.index',     'icon' => 'chart',      'label' => 'Laporan'],
+            ['route' => 'admin.settings.index',    'icon' => 'cog',        'label' => 'Pengaturan'],
         ];
         @endphp
 
         @foreach($navItems as $item)
-        @php $isActive = request()->routeIs($item['route'].'*'); @endphp
-        <a href="{{ route($item['route']) }}"
-           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 group
-                  {{ $isActive
-                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+        @php
+            try { $url = route($item['route']); } catch(\Exception $e) { continue; }
+            $isActive = request()->routeIs($item['route'].'*') || request()->routeIs(str_replace('admin.','admin.',$item['route']).'*');
+        @endphp
+        <a href="{{ $url }}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                  {{ $isActive ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
             <span class="w-5 h-5 flex-shrink-0">
                 @include('layouts.partials.icon', ['name' => $item['icon'], 'active' => $isActive])
             </span>
             {{ $item['label'] }}
-            @if($item['route'] === 'invoices.index')
-            @php $unpaid = \App\Models\Invoice::whereIn('status',['unpaid','overdue'])->count(); @endphp
+            @if($item['route'] === 'admin.invoices.index')
+            @php try { $unpaid = $kost ? \App\Models\Invoice::whereHas('tenant.room', fn($q)=>$q->where('kost_id',$kost->id))->whereIn('status',['unpaid','overdue'])->count() : 0; } catch(\Exception $e) { $unpaid = 0; } @endphp
             @if($unpaid > 0)
             <span class="ml-auto bg-amber-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $unpaid }}</span>
             @endif
             @endif
-            @if($item['route'] === 'complaints.index')
-            @php $active = \App\Models\Complaint::whereIn('status',['new','in_progress'])->count(); @endphp
+            @if($item['route'] === 'admin.applications.index')
+            @php try { $pendingApps = $kost ? \App\Models\RentalApplication::whereHas('room', fn($q)=>$q->where('kost_id',$kost->id))->where('status','pending')->count() : 0; } catch(\Exception $e) { $pendingApps = 0; } @endphp
+            @if($pendingApps > 0)
+            <span class="ml-auto bg-blue-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $pendingApps }}</span>
+            @endif
+            @endif
+            @if($item['route'] === 'admin.complaints.index')
+            @php try { $active = $kost ? \App\Models\Complaint::whereHas('tenant.room', fn($q)=>$q->where('kost_id',$kost->id))->whereIn('status',['new','in_progress'])->count() : 0; } catch(\Exception $e) { $active = 0; } @endphp
             @if($active > 0)
             <span class="ml-auto bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">{{ $active }}</span>
             @endif
             @endif
         </a>
         @endforeach
+
+        @else
+        {{-- ── MENU TENANT ── --}}
+        @php
+        $tenantNav = [
+            ['route' => 'tenant.dashboard',         'icon' => 'grid',       'label' => 'Dashboard'],
+            ['route' => 'tenant.invoices.index',    'icon' => 'receipt',    'label' => 'Tagihan Saya'],
+            ['route' => 'tenant.complaints.index',  'icon' => 'chat',       'label' => 'Keluhan Saya'],
+            ['route' => 'tenant.applications.index', 'icon' => 'folder-open','label' => 'Pengajuan Sewa Saya'],
+        ];
+        @endphp
+
+        @foreach($tenantNav as $item)
+        @php $isActive = request()->routeIs($item['route'].'*'); @endphp
+        <a href="{{ route($item['route']) }}"
+           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150
+                  {{ $isActive ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-600/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white' }}">
+            <span class="w-5 h-5 flex-shrink-0">
+                @include('layouts.partials.icon', ['name' => $item['icon'], 'active' => $isActive])
+            </span>
+            {{ $item['label'] }}
+        </a>
+        @endforeach
+
+        {{-- Link ke halaman publik --}}
+        <div class="pt-2 mt-2 border-t border-slate-800">
+            <a href="{{ route('public.kosts.index') }}"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-all duration-150">
+                <span class="w-5 h-5 flex-shrink-0">
+                    @include('layouts.partials.icon', ['name' => 'search', 'active' => false])
+                </span>
+                Cari Kos Lain
+            </a>
+        </div>
+        @endif
+
     </nav>
+
 
     {{-- User section --}}
     <div class="px-3 py-4 border-t border-slate-800">

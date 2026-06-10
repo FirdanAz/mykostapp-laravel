@@ -10,14 +10,18 @@ return new class extends Migration
     {
         Schema::create('kosts', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->string('name');
             $table->text('description')->nullable();
             $table->text('address');
+            $table->string('city')->nullable();
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->string('website')->nullable();
+            $table->enum('type', ['putra', 'putri', 'campur'])->default('campur');
             $table->json('photos')->nullable();
             $table->string('logo')->nullable();
+            $table->boolean('is_published')->default(false);
             $table->timestamps();
         });
     }

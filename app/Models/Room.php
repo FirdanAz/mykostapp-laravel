@@ -16,6 +16,7 @@ class Room extends Model
     public function facilities() { return $this->belongsToMany(Facility::class, 'room_facilities'); }
     public function tenants()    { return $this->hasMany(Tenant::class); }
     public function activeTenant(){ return $this->hasOne(Tenant::class)->where('status','active'); }
+    public function rentalApplications(){ return $this->hasMany(RentalApplication::class); }
 
     public function getStatusLabelAttribute(): string
     {

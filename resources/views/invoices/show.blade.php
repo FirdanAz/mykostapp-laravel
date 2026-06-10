@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title',$invoice->invoice_number)
 @section('page-title','Detail Tagihan')
-@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('invoices.index') }}" class="hover:text-slate-600">Tagihan</a> <span class="mx-1">/</span> {{ $invoice->invoice_number }} @endsection
+@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('admin.invoices.index') }}" class="hover:text-slate-600">Tagihan</a> <span class="mx-1">/</span> {{ $invoice->invoice_number }} @endsection
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -114,7 +114,7 @@
                             {{ $payment->status_label }}
                         </span>
                         @if($payment->status === 'pending')
-                        <a href="{{ route('payments.show', $payment) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Verifikasi →</a>
+                        <a href="{{ route('admin.payments.show', $payment) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">Verifikasi →</a>
                         @endif
                     </div>
                 </div>
@@ -130,7 +130,7 @@
             <h3 class="font-semibold text-slate-800 text-sm">Aksi</h3>
 
             @if(in_array($invoice->status, ['unpaid','overdue','rejected']))
-            <a href="{{ route('payments.upload', $invoice) }}"
+            <a href="{{ route('admin.payments.upload', $invoice) }}"
                class="w-full flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -140,7 +140,7 @@
             @endif
 
             @if($invoice->status === 'pending_verification' && $invoice->latestPayment)
-            <a href="{{ route('payments.show', $invoice->latestPayment) }}"
+            <a href="{{ route('admin.payments.show', $invoice->latestPayment) }}"
                class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
@@ -149,13 +149,13 @@
             </a>
             @endif
 
-            <a href="{{ route('tenants.show', $invoice->tenant) }}"
+            <a href="{{ route('admin.tenants.show', $invoice->tenant) }}"
                class="w-full flex items-center justify-center gap-2 bg-slate-100 text-slate-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-200 transition-colors">
                 Lihat Profil Penghuni
             </a>
 
             @if($invoice->status !== 'paid')
-            <form method="POST" action="{{ route('invoices.destroy', $invoice) }}" onsubmit="return confirm('Hapus invoice ini?')">
+            <form method="POST" action="{{ route('admin.invoices.destroy', $invoice) }}" onsubmit="return confirm('Hapus invoice ini?')">
                 @csrf @method('DELETE')
                 <button type="submit" class="w-full flex items-center justify-center gap-2 bg-red-50 text-red-600 text-sm font-semibold py-2.5 rounded-xl hover:bg-red-100 transition-colors">
                     Hapus Invoice

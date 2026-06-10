@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Pembayaran')
 @section('page-title','Manajemen Pembayaran')
 @section('breadcrumb') <span class="mx-1">/</span> Pembayaran @endsection
@@ -18,7 +18,7 @@
         </select>
         <button type="submit" class="px-4 py-2 bg-slate-800 text-white text-sm font-medium rounded-xl hover:bg-slate-700">Filter</button>
         @if(request()->hasAny(['search','status']))
-        <a href="{{ route('payments.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
+        <a href="{{ route('admin.payments.index') }}" class="px-4 py-2 bg-slate-100 text-slate-600 text-sm font-medium rounded-xl hover:bg-slate-200">Reset</a>
         @endif
     </form>
 </div>
@@ -50,7 +50,7 @@
                 @php $ps = ['pending'=>'bg-amber-100 text-amber-700','verified'=>'bg-green-100 text-green-700','rejected'=>'bg-red-100 text-red-700']; @endphp
                 <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-6 py-4">
-                        <a href="{{ route('invoices.show', $payment->invoice) }}" class="font-mono text-xs font-semibold text-blue-600 hover:text-blue-800">
+                        <a href="{{ route('admin.invoices.show', $payment->invoice) }}" class="font-mono text-xs font-semibold text-blue-600 hover:text-blue-800">
                             {{ $payment->invoice->invoice_number }}
                         </a>
                     </td>
@@ -81,7 +81,7 @@
                         </span>
                     </td>
                     <td class="px-6 py-4">
-                        <a href="{{ route('payments.show', $payment) }}"
+                        <a href="{{ route('admin.payments.show', $payment) }}"
                            class="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors inline-flex">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>

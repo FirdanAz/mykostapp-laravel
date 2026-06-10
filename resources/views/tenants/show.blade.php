@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title',$tenant->name)
 @section('page-title','Detail Penghuni')
-@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('tenants.index') }}" class="hover:text-slate-600">Penghuni</a> <span class="mx-1">/</span> {{ $tenant->name }} @endsection
+@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('admin.tenants.index') }}" class="hover:text-slate-600">Penghuni</a> <span class="mx-1">/</span> {{ $tenant->name }} @endsection
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
@@ -48,11 +48,11 @@
         </div>
 
         <div class="bg-white rounded-2xl border border-slate-200 p-5 space-y-2">
-            <a href="{{ route('tenants.edit', $tenant) }}" class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-colors">
+            <a href="{{ route('admin.tenants.edit', $tenant) }}" class="w-full flex items-center justify-center gap-2 bg-blue-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-blue-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 Edit Data
             </a>
-            <a href="{{ route('invoices.create', ['tenant_id' => $tenant->id]) }}" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition-colors">
+            <a href="{{ route('admin.invoices.create', ['tenant_id' => $tenant->id]) }}" class="w-full flex items-center justify-center gap-2 bg-green-600 text-white text-sm font-semibold py-2.5 rounded-xl hover:bg-green-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Buat Tagihan
             </a>
@@ -65,10 +65,10 @@
         <div class="bg-white rounded-2xl border border-slate-200">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                 <h3 class="font-semibold text-slate-800 text-sm">Riwayat Tagihan</h3>
-                <a href="{{ route('invoices.create', ['tenant_id'=>$tenant->id]) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">+ Buat Tagihan</a>
+                <a href="{{ route('admin.invoices.create', ['tenant_id'=>$tenant->id]) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">+ Buat Tagihan</a>
             </div>
             @forelse($tenant->invoices->take(5) as $invoice)
-            <a href="{{ route('invoices.show', $invoice) }}" class="flex items-center gap-4 px-6 py-3.5 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+            <a href="{{ route('admin.invoices.show', $invoice) }}" class="flex items-center gap-4 px-6 py-3.5 border-b border-slate-50 hover:bg-slate-50 transition-colors">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-slate-800">{{ $invoice->invoice_number }}</p>
                     <p class="text-xs text-slate-400">{{ $invoice->period_start->format('M Y') }} • Jatuh tempo: {{ $invoice->due_date->format('d M Y') }}</p>
@@ -88,10 +88,10 @@
         <div class="bg-white rounded-2xl border border-slate-200">
             <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100">
                 <h3 class="font-semibold text-slate-800 text-sm">Riwayat Keluhan</h3>
-                <a href="{{ route('complaints.create', ['tenant_id'=>$tenant->id]) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">+ Catat Keluhan</a>
+                <a href="{{ route('admin.complaints.create', ['tenant_id'=>$tenant->id]) }}" class="text-xs text-blue-600 hover:text-blue-700 font-medium">+ Catat Keluhan</a>
             </div>
             @forelse($tenant->complaints->take(5) as $c)
-            <a href="{{ route('complaints.show', $c) }}" class="flex items-center gap-4 px-6 py-3.5 border-b border-slate-50 hover:bg-slate-50 transition-colors">
+            <a href="{{ route('admin.complaints.show', $c) }}" class="flex items-center gap-4 px-6 py-3.5 border-b border-slate-50 hover:bg-slate-50 transition-colors">
                 <div class="flex-1">
                     <p class="text-sm font-medium text-slate-800">{{ $c->title }}</p>
                     <p class="text-xs text-slate-400">{{ $c->category_label }} • {{ $c->created_at->diffForHumans() }}</p>

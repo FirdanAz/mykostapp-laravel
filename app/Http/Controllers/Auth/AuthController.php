@@ -8,9 +8,7 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class AuthController extends Controller
@@ -25,8 +23,21 @@ class AuthController extends Controller
         $request->authenticate();
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard'))
-            ->with('success', 'Selamat datang kembali, '.Auth::user()->name.'!');
+        $user = Auth::user();
+
+        if ($user->isAdmin()) {
+            // Admin tanpa kos → onboarding
+            if (!$user->kost) {
+                return redirect()->route('admin.kost.setup')
+                    ->with('info', 'Selamat datang! Silakan lengkapi data kos Anda.');
+            }
+            return redirect()->intended(route('dashboard'))
+                ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
+        }
+
+        // Tenant
+        return redirect()->route('tenant.dashboard')
+            ->with('success', 'Selamat datang kembali, ' . $user->name . '!');
     }
 
     public function showRegister(): View
@@ -37,16 +48,19 @@ class AuthController extends Controller
     public function register(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'     => ['required','string','max:255'],
-            'email'    => ['required','string','email','max:255','unique:users'],
-            'password' => ['required','confirmed', Rules\Password::defaults()],
-            'phone'    => ['nullable','string','max:20'],
-        ],[
+            'name'     => ['required', 'string', 'max:255'],
+            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'phone'    => ['nullable', 'string', 'max:20'],
+            'role'     => ['required', 'in:admin,tenant'],
+        ], [
             'name.required'      => 'Nama wajib diisi.',
             'email.required'     => 'Email wajib diisi.',
             'email.unique'       => 'Email sudah terdaftar.',
             'password.required'  => 'Password wajib diisi.',
             'password.confirmed' => 'Konfirmasi password tidak cocok.',
+            'role.required'      => 'Pilih tipe akun Anda.',
+            'role.in'            => 'Tipe akun tidak valid.',
         ]);
 
         $user = User::create([
@@ -54,13 +68,18 @@ class AuthController extends Controller
             'email'    => $request->email,
             'password' => $request->password,
             'phone'    => $request->phone,
-            'role'     => 'admin',
+            'role'     => $request->role,
         ]);
 
         Auth::login($user);
         $request->session()->regenerate();
 
-        return redirect()->route('dashboard')
+        if ($user->isAdmin()) {
+            return redirect()->route('admin.kost.setup')
+                ->with('success', 'Akun berhasil dibuat! Silakan lengkapi data kos Anda.');
+        }
+
+        return redirect()->route('tenant.dashboard')
             ->with('success', 'Akun berhasil dibuat! Selamat datang di MyKostApp.');
     }
 

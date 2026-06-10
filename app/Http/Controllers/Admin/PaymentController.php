@@ -14,55 +14,44 @@ use Illuminate\View\View;
 
 class PaymentController extends Controller
 {
+    private function getKost()
+    {
+        $kost = auth()->user()->kost;
+        if (!$kost) abort(403, 'Setup kos Anda terlebih dahulu.');
+        return $kost;
+    }
+
     public function index(Request $request): View
     {
-        $query = Payment::with(['invoice.tenant.room'])->latest();
+        $kost  = $this->getKost();
+        $query = Payment::with(['invoice.tenant.room'])
+            ->whereHas('invoice.tenant.room', fn($q) => $q->where('kost_id', $kost->id))
+            ->latest();
 
-        if ($request->status)  $query->where('status', $request->status);
+        if ($request->status) $query->where('status', $request->status);
         if ($request->search) {
             $query->whereHas('invoice', fn($q) =>
-                $q->where('invoice_number','like','%'.$request->search.'%')
-                  ->orWhereHas('tenant', fn($tq) => $tq->where('name','like','%'.$request->search.'%'))
+                $q->where('invoice_number', 'like', '%' . $request->search . '%')
+                  ->orWhereHas('tenant', fn($tq) => $tq->where('name', 'like', '%' . $request->search . '%'))
             );
         }
 
         $payments = $query->paginate(15)->withQueryString();
-        return view('payments.index', compact('payments'));
+        return view('payments.index', compact('payments', 'kost'));
     }
 
     public function show(Payment $payment): View
     {
-        $payment->load(['invoice.tenant.room','verifiedBy']);
+        $this->authorizePayment($payment);
+        $payment->load(['invoice.tenant.room', 'verifiedBy']);
         return view('payments.show', compact('payment'));
     }
 
-    public function upload(Invoice $invoice): View
-    {
-        if ($invoice->status === 'paid') abort(403, 'Invoice sudah lunas.');
-        return view('payments.upload', compact('invoice'));
-    }
-
-    public function store(PaymentUploadRequest $request, Invoice $invoice): RedirectResponse
-    {
-        $proofPath = $request->file('proof_file')->store('payments','public');
-
-        $payment = Payment::create([
-            'invoice_id' => $invoice->id,
-            'proof_file' => $proofPath,
-            'amount'     => $request->amount,
-            'status'     => 'pending',
-        ]);
-
-        $invoice->update(['status' => 'pending_verification']);
-
-        NotificationService::paymentSubmitted($payment);
-
-        return redirect()->route('invoices.show', $invoice)
-            ->with('success', 'Bukti pembayaran berhasil diunggah. Menunggu verifikasi.');
-    }
-
+    /** Verifikasi pembayaran oleh admin */
     public function verify(Payment $payment): RedirectResponse
     {
+        $this->authorizePayment($payment);
+
         $payment->update([
             'status'      => 'verified',
             'verified_by' => auth()->id(),
@@ -76,11 +65,14 @@ class PaymentController extends Controller
         return back()->with('success', 'Pembayaran berhasil diverifikasi.');
     }
 
+    /** Tolak pembayaran oleh admin */
     public function reject(Request $request, Payment $payment): RedirectResponse
     {
+        $this->authorizePayment($payment);
+
         $request->validate([
-            'rejection_reason' => ['required','string','max:500'],
-        ],['rejection_reason.required' => 'Alasan penolakan wajib diisi.']);
+            'rejection_reason' => ['required', 'string', 'max:500'],
+        ], ['rejection_reason.required' => 'Alasan penolakan wajib diisi.']);
 
         $payment->update([
             'status'           => 'rejected',
@@ -89,10 +81,18 @@ class PaymentController extends Controller
             'verified_at'      => now(),
         ]);
 
-        $payment->invoice->update(['status' => 'rejected']);
+        $payment->invoice->update(['status' => 'unpaid']);
 
         NotificationService::paymentRejected($payment);
 
         return back()->with('success', 'Pembayaran telah ditolak.');
+    }
+
+    private function authorizePayment(Payment $payment): void
+    {
+        $kost = auth()->user()->kost;
+        if (!$kost || $payment->invoice?->tenant?->room?->kost_id !== $kost->id) {
+            abort(403, 'Anda tidak memiliki akses ke pembayaran ini.');
+        }
     }
 }

@@ -1,7 +1,7 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 @section('title','Verifikasi Pembayaran')
 @section('page-title','Detail Pembayaran')
-@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('payments.index') }}" class="hover:text-slate-600">Pembayaran</a> <span class="mx-1">/</span> Detail @endsection
+@section('breadcrumb') <span class="mx-1">/</span> <a href="{{ route('admin.payments.index') }}" class="hover:text-slate-600">Pembayaran</a> <span class="mx-1">/</span> Detail @endsection
 
 @section('content')
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -86,7 +86,7 @@
             <div class="p-4 bg-green-50 border border-green-200 rounded-xl mb-4">
                 <p class="text-sm text-green-700">Pastikan nominal, tanggal, dan identitas pengirim sesuai sebelum menyetujui.</p>
             </div>
-            <form method="POST" action="{{ route('payments.verify', $payment) }}">
+            <form method="POST" action="{{ route('admin.payments.verify', $payment) }}">
                 @csrf
                 <button type="submit" onclick="return confirm('Setujui pembayaran ini?')"
                         class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 rounded-xl text-sm transition-colors shadow-lg shadow-green-600/20">
@@ -98,7 +98,7 @@
         {{-- Reject --}}
         <div class="bg-white rounded-2xl border border-slate-200 p-5">
             <h3 class="font-semibold text-slate-800 text-sm mb-4">Tolak Pembayaran</h3>
-            <form method="POST" action="{{ route('payments.reject', $payment) }}" class="space-y-3"
+            <form method="POST" action="{{ route('admin.payments.reject', $payment) }}" class="space-y-3"
                   onsubmit="return confirm('Tolak pembayaran ini? Penghuni perlu upload ulang bukti.')">
                 @csrf
                 <div>
@@ -139,7 +139,7 @@
         </div>
         @endif
 
-        <a href="{{ route('invoices.show', $payment->invoice) }}"
+        <a href="{{ route('admin.invoices.show', $payment->invoice) }}"
            class="w-full flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 text-sm font-semibold py-2.5 rounded-xl hover:bg-slate-50 transition-colors">
             ← Kembali ke Invoice
         </a>

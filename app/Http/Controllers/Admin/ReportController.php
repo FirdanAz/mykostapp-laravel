@@ -13,64 +13,80 @@ use Illuminate\View\View;
 
 class ReportController extends Controller
 {
+    private function getKost()
+    {
+        $kost = auth()->user()->kost;
+        if (!$kost) abort(403, 'Setup kos Anda terlebih dahulu.');
+        return $kost;
+    }
+
     public function index(Request $request): View
     {
+        $kost  = $this->getKost();
+        $kostId = $kost->id;
+
         $year  = $request->get('year',  now()->year);
         $month = $request->get('month', now()->month);
 
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate   = $startDate->copy()->endOfMonth();
 
-        // Revenue this month
-        $revenue = Payment::where('status','verified')
+        $revenue = Payment::whereHas('invoice.tenant.room', fn($q) => $q->where('kost_id', $kostId))
+            ->where('status', 'verified')
             ->whereBetween('verified_at', [$startDate, $endDate])
             ->sum('amount');
 
-        // Revenue by month (full year)
         $monthlyData = [];
         for ($m = 1; $m <= 12; $m++) {
             $start = Carbon::create($year, $m, 1)->startOfMonth();
             $end   = $start->copy()->endOfMonth();
             $monthlyData[] = [
-                'month'   => $start->translatedFormat('M'),
-                'revenue' => (float) Payment::where('status','verified')
-                    ->whereBetween('verified_at',[$start,$end])->sum('amount'),
-                'invoices'=> Invoice::whereYear('period_start', $year)
-                    ->whereMonth('period_start', $m)->count(),
-                'paid'    => Invoice::whereYear('period_start', $year)
-                    ->whereMonth('period_start', $m)->where('status','paid')->count(),
+                'month'    => $start->translatedFormat('M'),
+                'revenue'  => (float) Payment::whereHas('invoice.tenant.room', fn($q) => $q->where('kost_id', $kostId))
+                    ->where('status', 'verified')->whereBetween('verified_at', [$start, $end])->sum('amount'),
+                'invoices' => Invoice::whereHas('tenant.room', fn($q) => $q->where('kost_id', $kostId))
+                    ->whereYear('period_start', $year)->whereMonth('period_start', $m)->count(),
+                'paid'     => Invoice::whereHas('tenant.room', fn($q) => $q->where('kost_id', $kostId))
+                    ->whereYear('period_start', $year)->whereMonth('period_start', $m)->where('status', 'paid')->count(),
             ];
         }
 
-        // Occupancy
-        $totalRooms    = Room::count();
-        $occupiedRooms = Room::where('status','occupied')->count();
+        $totalRooms    = Room::where('kost_id', $kostId)->count();
+        $occupiedRooms = Room::where('kost_id', $kostId)->where('status', 'occupied')->count();
         $occupancyRate = $totalRooms > 0 ? round(($occupiedRooms / $totalRooms) * 100, 1) : 0;
 
-        // Invoice summary
+        $baseInvoice = Invoice::whereHas('tenant.room', fn($q) => $q->where('kost_id', $kostId))
+            ->whereYear('period_start', $year)->whereMonth('period_start', $month);
+
         $invoiceSummary = [
-            'total'   => Invoice::whereYear('period_start', $year)->whereMonth('period_start', $month)->count(),
-            'paid'    => Invoice::whereYear('period_start', $year)->whereMonth('period_start', $month)->where('status','paid')->count(),
-            'unpaid'  => Invoice::whereYear('period_start', $year)->whereMonth('period_start', $month)->whereIn('status',['unpaid','overdue'])->count(),
-            'pending' => Invoice::whereYear('period_start', $year)->whereMonth('period_start', $month)->where('status','pending_verification')->count(),
+            'total'   => (clone $baseInvoice)->count(),
+            'paid'    => (clone $baseInvoice)->where('status', 'paid')->count(),
+            'unpaid'  => (clone $baseInvoice)->whereIn('status', ['unpaid', 'overdue'])->count(),
+            'pending' => (clone $baseInvoice)->where('status', 'pending_verification')->count(),
         ];
 
-        // Top tenants by payment
-        $topTenants = Tenant::withSum(['invoices as paid_amount' => function($q) use ($year,$month) {
-            $q->where('status','paid')
-              ->whereYear('period_start', $year)
-              ->whereMonth('period_start', $month);
-        }],'amount')->orderByDesc('paid_amount')->take(5)->get();
+        $topTenants = Tenant::whereHas('room', fn($q) => $q->where('kost_id', $kostId))
+            ->withSum(['invoices as paid_amount' => function ($q) use ($year, $month) {
+                $q->where('status', 'paid')
+                  ->whereYear('period_start', $year)
+                  ->whereMonth('period_start', $month);
+            }], 'amount')
+            ->orderByDesc('paid_amount')
+            ->take(5)
+            ->get();
 
         return view('reports.index', compact(
-            'year','month','revenue','monthlyData',
-            'totalRooms','occupiedRooms','occupancyRate',
-            'invoiceSummary','topTenants'
+            'kost', 'year', 'month', 'revenue', 'monthlyData',
+            'totalRooms', 'occupiedRooms', 'occupancyRate',
+            'invoiceSummary', 'topTenants'
         ));
     }
 
     public function exportPdf(Request $request)
     {
+        $kost   = $this->getKost();
+        $kostId = $kost->id;
+
         $year  = $request->get('year',  now()->year);
         $month = $request->get('month', now()->month);
 
@@ -78,7 +94,8 @@ class ReportController extends Controller
         $endDate   = $startDate->copy()->endOfMonth();
 
         $payments = Payment::with('invoice.tenant.room')
-            ->where('status','verified')
+            ->whereHas('invoice.tenant.room', fn($q) => $q->where('kost_id', $kostId))
+            ->where('status', 'verified')
             ->whereBetween('verified_at', [$startDate, $endDate])
             ->get();
 
@@ -86,19 +103,20 @@ class ReportController extends Controller
         $monthLabel   = $startDate->translatedFormat('F Y');
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('reports.pdf', compact(
-            'payments','totalRevenue','monthLabel','year','month'
+            'payments', 'totalRevenue', 'monthLabel', 'year', 'month', 'kost'
         ));
 
-        return $pdf->download("laporan-{$year}-{$month}.pdf");
+        return $pdf->download("laporan-{$kost->name}-{$year}-{$month}.pdf");
     }
 
     public function exportExcel(Request $request)
     {
+        $kost  = $this->getKost();
         $year  = $request->get('year',  now()->year);
         $month = $request->get('month', now()->month);
         return \Maatwebsite\Excel\Facades\Excel::download(
-            new \App\Exports\ReportExport($year, $month),
-            "laporan-{$year}-{$month}.xlsx"
+            new \App\Exports\ReportExport($year, $month, $kost->id),
+            "laporan-{$kost->name}-{$year}-{$month}.xlsx"
         );
     }
 }
